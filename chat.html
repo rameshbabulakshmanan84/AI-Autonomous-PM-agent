@@ -1,0 +1,305 @@
+
+raw
+Chat · HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Autonomous PM Agent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f2f5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+ 
+  .container {
+    width: 100%;
+    max-width: 800px;
+    height: 92vh;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+ 
+  .header {
+    padding: 18px 24px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+ 
+  .header-icon {
+    width: 36px; height: 36px;
+    background: #6c47ff;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+ 
+  .header-text h1 { font-size: 16px; font-weight: 600; color: #111; }
+  .header-text p  { font-size: 12px; color: #888; margin-top: 2px; }
+ 
+  .project-badge {
+    margin-left: auto;
+    font-size: 11px;
+    color: #6c47ff;
+    background: #f0ebff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+ 
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+ 
+  .message {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 85%;
+  }
+ 
+  .message.user { align-self: flex-end; flex-direction: row-reverse; }
+ 
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+ 
+  .message.agent .avatar { background: #6c47ff; color: white; }
+  .message.user  .avatar { background: #e8f5e9; color: #2e7d32; }
+ 
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+ 
+  .message.agent .bubble {
+    background: #f7f7f8;
+    color: #111;
+    border-top-left-radius: 4px;
+  }
+ 
+  .message.user .bubble {
+    background: #6c47ff;
+    color: white;
+    border-top-right-radius: 4px;
+  }
+ 
+  .typing {
+    display: flex; gap: 4px; align-items: center;
+    padding: 14px 16px;
+    background: #f7f7f8;
+    border-radius: 16px;
+    border-top-left-radius: 4px;
+    width: fit-content;
+  }
+ 
+  .typing span {
+    width: 6px; height: 6px;
+    background: #aaa; border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+ 
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+ 
+  .input-area {
+    padding: 16px 24px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+ 
+  textarea {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    max-height: 120px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+ 
+  textarea:focus { border-color: #6c47ff; }
+ 
+  button {
+    width: 42px; height: 42px;
+    background: #6c47ff;
+    border: none; border-radius: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+ 
+  button:hover { background: #5535e0; }
+  button:disabled { background: #ccc; cursor: not-allowed; }
+ 
+  button svg { width: 18px; height: 18px; fill: white; }
+ 
+  .welcome {
+    text-align: center;
+    color: #aaa;
+    font-size: 14px;
+    margin: auto;
+  }
+  .welcome h2 { font-size: 20px; color: #6c47ff; margin-bottom: 8px; }
+  .welcome p  { line-height: 1.6; max-width: 360px; margin: 0 auto; }
+</style>
+</head>
+<body>
+ 
+<div class="container">
+  <div class="header">
+    <div class="header-icon">🤖</div>
+    <div class="header-text">
+      <h1>Autonomous PM Agent</h1>
+      <p>BRD → Charter → User Stories → Trello</p>
+    </div>
+    <div class="project-badge" id="projectBadge">Starting...</div>
+  </div>
+ 
+  <div class="messages" id="messages">
+    <div class="welcome" id="welcome">
+      <h2>👋 Hello, PM!</h2>
+      <p>Paste your BRD below and I'll generate a project charter, get it approved, and push user stories to Trello.</p>
+    </div>
+  </div>
+ 
+  <div class="input-area">
+    <textarea id="input" placeholder="Paste your BRD or type a message..." rows="1"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+    </button>
+  </div>
+</div>
+ 
+<script>
+  window.sessionId = null;
+ 
+  // Auto-resize textarea
+  const textarea = document.getElementById('input');
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  });
+ 
+  // Send on Enter (Shift+Enter for newline)
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+ 
+  // Start session on load
+  async function startSession() {
+    const res  = await fetch('/session/new', { method: 'POST' });
+    const data = await res.json();
+    window.sessionId = data.session_id;
+    console.log('Session started:', window.sessionId);
+    document.getElementById('projectBadge').textContent = `Project: ${data.project_id}`;
+  }
+ 
+  function addMessage(role, text) {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+ 
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+ 
+    const avatar = role === 'agent' ? '🤖' : '👤';
+    div.innerHTML = `
+      <div class="avatar">${avatar}</div>
+      <div class="bubble">${text}</div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+ 
+  function showTyping() {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message agent';
+    div.id = 'typing';
+    div.innerHTML = `
+      <div class="avatar">🤖</div>
+      <div class="typing"><span></span><span></span><span></span></div>
+    `;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+ 
+  function hideTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+ 
+  async function sendMessage() {
+    const input = document.getElementById('input');
+    const text  = input.value.trim();
+    console.log('text:', text, 'sessionId:', sessionId);
+    if (!text) return;
+    input.value = '';
+    input.style.height = 'auto';
+    document.getElementById('sendBtn').disabled = true;
+ 
+    addMessage('user', text);
+    showTyping();
+ 
+    try {
+      const res  = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, message: text })
+      });
+      const data = await res.json();
+      hideTyping();
+      addMessage('agent', data.reply || data.error);
+    } catch (e) {
+      hideTyping();
+      addMessage('agent', 'Something went wrong. Please try again.');
+    }
+ 
+    document.getElementById('sendBtn').disabled = false;
+    input.focus();
+  }
+ 
+  startSession();
+</script>
+</body>
+</html>
